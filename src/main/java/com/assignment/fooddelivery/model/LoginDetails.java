@@ -1,15 +1,13 @@
 package com.assignment.fooddelivery.model;
 
+import com.assignment.fooddelivery.enums.UserTypes;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Data
@@ -24,7 +22,9 @@ public class LoginDetails {
     private Long id;
     private String username;
     private String password; // This will store the tokenized password
-    private String userRole;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserTypes userRole;
     private boolean isDeleted;
     private boolean isArchived;
     private LocalDateTime createdAt;
@@ -55,11 +55,11 @@ public class LoginDetails {
         this.password = password;
     }
 
-    public String getUserRole() {
+    public UserTypes getUserRole() {
         return userRole;
     }
 
-    public void setUserRole(String userRole) {
+    public void setUserRole(UserTypes userRole) {
         this.userRole = userRole;
     }
 
