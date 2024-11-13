@@ -1,5 +1,7 @@
 package com.assignment.fooddelivery.model;
 
+import com.assignment.fooddelivery.enums.OrderStatus;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,8 +22,9 @@ public class Order {
     @JoinColumn(name = "restaurant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_customer_orders_restaurant_id"))
     private Restaurant restaurant;
 
-    @Column(nullable = false, length = 50)
-    private String orderStatus;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrderStatus orderStatus;
 
     @Column(nullable = false, columnDefinition = "json")
     private String orderDetails; // Using String to represent JSON data
