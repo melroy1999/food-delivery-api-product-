@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties
-@Entity(name = "login_details")
+@Entity
+@Table(name = "login_details")
 public class LoginDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
