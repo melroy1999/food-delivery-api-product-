@@ -22,33 +22,33 @@ public class DeliveryAgent {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(nullable = false, length = 10)
+    @Column(name = "mobile_number", nullable = false, length = 10)
     private String mobileNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "vehicle_type", nullable = false)
     private VehicleTypes vehicleType;
 
     @ManyToOne
     @JoinColumn(name = "restaurant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_delivery_agents_restaurant_id"))
     private Restaurant restaurant;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(nullable = false)
+    @Column(name = "is_working", nullable = false)
     private Boolean isWorking = true;
 
-    @Column(nullable = false)
+    @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 
-    @Column(nullable = false)
+    @Column(name = "is_archived", nullable = false)
     private Boolean isArchived = false;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     public void setId(Long deliveryAgentId) {

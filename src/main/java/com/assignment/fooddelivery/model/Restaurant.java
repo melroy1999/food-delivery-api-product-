@@ -25,32 +25,32 @@ public class Restaurant {
     @Column(nullable = false, length = 255)
     private String address;
 
-    @Column(nullable = false, length = 15)
+    @Column(name="contact_no", nullable = false, length = 15)
     private String contactNo;
 
-    @Column(nullable = false, length = 100)
+    @Column(name="opening_days", nullable = false, length = 100)
     private String openingDays;
 
-    @Column(nullable = false)
+    @Column(name="opening_time", nullable = false)
     private String openingTime;
 
-    @Column(nullable = false)
+    @Column(name="closing_time", nullable = false)
     private String closingTime;
 
-    @Column(nullable = false)
+    @Column(name="dine_in", nullable = false)
     private boolean dineIn = false;
 
-    @Column(nullable = false)
+    @Column(name="take_away", nullable = false)
     private boolean takeAway = false;
 
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false, foreignKey = @ForeignKey(name = "fk_restaurants_owner_id"))
     private RestaurantOwner owner;
 
-    @Column(nullable = false)
+    @Column(name="is_deleted", nullable = false)
     private boolean isDeleted = false;
 
-    @Column(nullable = false)
+    @Column(name="is_archived", nullable = false)
     private boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)
