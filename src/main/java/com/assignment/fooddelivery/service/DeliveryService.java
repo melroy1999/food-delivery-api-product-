@@ -10,6 +10,7 @@ import com.assignment.fooddelivery.repository.DeliveryAgentRepository;
 import com.assignment.fooddelivery.statemachine.OrderEvents;
 import com.assignment.fooddelivery.statemachine.OrderStates;
 import com.assignment.fooddelivery.statemachine.ProcessOrderEvent;
+import com.assignment.fooddelivery.utils.CommonOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,9 +27,15 @@ public class DeliveryService {
     private ProcessOrderEvent processOrderEvent;
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private CommonOperations commonOperations;
 
     public ProcessDeliveryResponse processOrderDelivery(ProcessDeliveryRequest processDeliveryRequest, Long orderId) {
         try {
+            if(!commonOperations.isEligibleOrderEvent(UserTypes.DELIVERY_AGENT.name(), OrderEvents.valueOf(processDeliveryRequest.getDeliveryStatus().getOrderEvent()))) {
+                log.error("Delivery agent is not eligible to perform this action");
+                throw new ServiceException(HttpStatus.BAD_REQUEST, "Delivery agent is not eligible to perform this action");
+            }
             DeliveryAgent deliveryAgent = deliveryAgentRepository.findById(processDeliveryRequest.getDeliveryAgentId()).orElse(null);
             if (deliveryAgent == null) {
                 log.error("Delivery agent with id {} not found", processDeliveryRequest.getDeliveryAgentId());
@@ -44,9 +51,13 @@ public class DeliveryService {
                 throw new ServiceException(HttpStatus.BAD_REQUEST, "Order with id " + orderId + " is already delivered");
             }
             OrderEvents orderEvent = OrderEvents.valueOf(processDeliveryRequest.getDeliveryStatus().getOrderEvent());
-            processOrderEvent.process(order.getId(), orderEvent, processDeliveryRequest.getDeliveryStatus().getComment(), UserTypes.DELIVERY_AGENT, deliveryAgent.getId());
+            OrderStates orderStates = processOrderEvent.process(order.getId(), orderEvent, processDeliveryRequest.getDeliveryStatus().getComment(), UserTypes.DELIVERY_AGENT, deliveryAgent.getId());
+            if(order.getOrderStatus().ordinal() >= orderStates.ordinal()) {
+                log.error("Order state transition failed for order with id: {}", orderId);
+                throw new ServiceException(HttpStatus.BAD_REQUEST, "Order state transition failed for order with id: " + orderId);
+            }
             // Process the delivery
-            if (processDeliveryRequest.getDeliveryStatus().getOrderEvent().equals(OrderEvents.ACCEPT_DELIVERY)) {
+            if (processDeliveryRequest.getDeliveryStatus().getOrderEvent().equals(OrderEvents.ACCEPT_DELIVERY.name())) {
                 orderService.addOrderDeliveryAgentMapping(order, deliveryAgent);
             }
             order = orderService.getOrderByOrderId(orderId);

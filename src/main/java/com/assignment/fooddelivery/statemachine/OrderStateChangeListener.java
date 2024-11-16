@@ -2,10 +2,10 @@ package com.assignment.fooddelivery.statemachine;
 
 import com.assignment.fooddelivery.exception.ServiceException;
 import com.assignment.fooddelivery.model.Order;
-import com.assignment.fooddelivery.repository.OrderRepository;
+import com.assignment.fooddelivery.model.OrderLog;
+import com.assignment.fooddelivery.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.Message;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.annotation.OnEventNotAccepted;
 import org.springframework.statemachine.annotation.OnStateChanged;
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class OrderStateChangeListener {
 
     @Autowired
-    private OrderRepository orderRepository;
+    private OrderService orderService;
 
     @OnStateChanged
     public void onStateChanged(StateMachine<OrderStates, OrderEvents> stateMachine) {
@@ -32,13 +32,25 @@ public class OrderStateChangeListener {
         // Get the new state directly from the state machine
         OrderStates newState = stateMachine.getState().getId();
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ServiceException(HttpStatus.BAD_REQUEST, "Order not found"));
+        Order order = orderService.getOrderByOrderId(orderId);
 
-        //validateStateTransition(order.getOrderStatus(), newState);
-        order.setOrderStatus(newState);
-        order.setUpdatedAt(LocalDateTime.now());
-        orderRepository.save(order);
+        if(order.getOrderStatus() != newState && order.getOrderStatus().ordinal() < newState.ordinal()) {
+            order.setOrderStatus(newState);
+            order.setUpdatedAt(LocalDateTime.now());
+            orderService.updateOrder(order);
+
+            OrderLog orderLog = OrderLog.builder()
+                    .order(order)
+                    .orderSubStatus(newState.name())
+                    .remarks((String) stateMachine.getExtendedState().getVariables().get("remarks"))
+                    .enteredBy((String) stateMachine.getExtendedState().getVariables().get("enteredByType"))
+                    .enteredById((Long) stateMachine.getExtendedState().getVariables().get("enteredById"))
+                    .isDeleted(false)
+                    .isArchived(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            orderService.updateOrderLog(orderLog);
+        }
     }
 
     @OnEventNotAccepted
@@ -50,44 +62,5 @@ public class OrderStateChangeListener {
         }
 
         throw new ServiceException(HttpStatus.BAD_REQUEST, "Invalid event for the current state " + stateMachine.getState().getId());
-    }
-
-    private void validateStateTransition(OrderStates currentState, OrderStates newState) {
-        switch (currentState) {
-            case PLACED:
-                if (newState != OrderStates.CONFIRMED && newState != OrderStates.CANCELLED) {
-                    throw new IllegalStateException("Invalid state transition from " + currentState + " to " + newState);
-                }
-                break;
-            case CONFIRMED:
-                if (newState != OrderStates.PREPARING && newState != OrderStates.CANCELLED) {
-                    throw new IllegalStateException("Invalid state transition from " + currentState + " to " + newState);
-                }
-                break;
-            case PREPARING:
-                if (newState != OrderStates.READY && newState != OrderStates.CANCELLED) {
-                    throw new IllegalStateException("Invalid state transition from " + currentState + " to " + newState);
-                }
-                break;
-            case READY:
-                if (newState != OrderStates.ACCEPTED_BY_DELIVERY_AGENT && newState != OrderStates.CANCELLED) {
-                    throw new IllegalStateException("Invalid state transition from " + currentState + " to " + newState);
-                }
-                break;
-            case ACCEPTED_BY_DELIVERY_AGENT:
-                if (newState != OrderStates.OUT_FOR_DELIVERY && newState != OrderStates.CANCELLED) {
-                    throw new IllegalStateException("Invalid state transition from " + currentState + " to " + newState);
-                }
-                break;
-            case OUT_FOR_DELIVERY:
-                if (newState != OrderStates.DELIVERED && newState != OrderStates.CANCELLED) {
-                    throw new IllegalStateException("Invalid state transition from " + currentState + " to " + newState);
-                }
-                break;
-            case DELIVERED:
-                throw new IllegalStateException("No transitions allowed from the DELIVERED state");
-            default:
-                throw new IllegalStateException("Invalid state transition from " + currentState + " to " + newState);
-        }
     }
 }
