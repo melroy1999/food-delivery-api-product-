@@ -16,6 +16,8 @@ public class RestaurantOwnerRequest {
 	private String openingDays;
 	private String openingTime;
 	private String closingTime;
+	private String email;
+	private String password;
 	private boolean dineIn;
 	private boolean takeAway;
 	private Long ownerId;
