@@ -34,20 +34,24 @@ public class DeliveryAgent {
     private Restaurant restaurant;
 
     @Column(nullable = false)
-    private boolean isActive = true;
+    private Boolean isActive = true;
 
     @Column(nullable = false)
-    private boolean isWorking = true;
+    private Boolean isWorking = true;
 
     @Column(nullable = false)
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
     @Column(nullable = false)
-    private boolean isArchived = false;
+    private Boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    public void setId(Long deliveryAgentId) {
+        this.id = deliveryAgentId;
+    }
 }

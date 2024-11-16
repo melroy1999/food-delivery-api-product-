@@ -1,11 +1,21 @@
 package com.assignment.fooddelivery.model;
 
-import com.assignment.fooddelivery.enums.OrderStatus;
+import com.assignment.fooddelivery.statemachine.OrderStates;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties
 @Entity
 @Table(name = "orders")
 public class Order {
@@ -24,7 +34,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus orderStatus;
+    private OrderStates orderStatus;
 
     @Column(nullable = false, columnDefinition = "json")
     private String orderDetails; // Using String to represent JSON data
@@ -45,5 +55,15 @@ public class Order {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     // Getters and setters
+    public OrderStates getOrderStatus() {
+        return orderStatus;
+    }
+
+    public void setOrderStatus(OrderStates orderStatus) {
+        this.orderStatus = orderStatus;
+    }
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
 
