@@ -24,23 +24,23 @@ public class Restaurant {
 
     @Column(nullable = false, length = 255)
     private String address;
-
-    @Column(name="contact_no", nullable = false, length = 15)
+    
+    @Column(name = "contact_no",nullable = false, length = 15)
     private String contactNo;
 
-    @Column(name="opening_days", nullable = false, length = 100)
+    @Column(name = "opening_days",nullable = false, length = 100)
     private String openingDays;
 
-    @Column(name="opening_time", nullable = false)
+    @Column(name = "opening_time",nullable = false)
     private String openingTime;
 
-    @Column(name="closing_time", nullable = false)
+    @Column(name = "closing_time", nullable = false)
     private String closingTime;
 
-    @Column(name="dine_in", nullable = false)
+    @Column(name = "dine_in",nullable = false)
     private boolean dineIn = false;
 
-    @Column(name="take_away", nullable = false)
+    @Column(name = "take_away",nullable = false)
     private boolean takeAway = false;
 
     @ManyToOne
