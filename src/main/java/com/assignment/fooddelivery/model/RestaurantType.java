@@ -21,13 +21,13 @@ public class RestaurantType {
     @Column(nullable = false)
     private boolean veg = false;
 
-    @Column(nullable = false)
+    @Column(name="non_veg", nullable = false)
     private boolean nonVeg = false;
 
-    @Column(nullable = false)
+    @Column(name="is_deleted", nullable = false)
     private boolean isDeleted = false;
 
-    @Column(nullable = false)
+    @Column(name="is_archived", nullable = false)
     private boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)

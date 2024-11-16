@@ -33,19 +33,19 @@ public class Order {
     private Restaurant restaurant;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name="order_status", nullable = false)
     private OrderStates orderStatus;
 
-    @Column(nullable = false, columnDefinition = "json")
+    @Column(name="order_details", nullable = false, columnDefinition = "json")
     private String orderDetails; // Using String to represent JSON data
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name="total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(nullable = false)
+    @Column(name="is_deleted", nullable = false)
     private boolean isDeleted = false;
 
-    @Column(nullable = false)
+    @Column(name="is_archived", nullable = false)
     private boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)
