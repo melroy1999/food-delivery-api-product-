@@ -25,10 +25,11 @@ public class CommonOperations {
             case "DELIVERY_AGENT":
                 eligibleEvents = EnumSet.of(OrderEvents.ACCEPT_DELIVERY, OrderEvents.START_DELIVERY, OrderEvents.COMPLETE_DELIVERY);
                 break;
-            case "RESTAURANT_OWNER":
-                eligibleEvents = EnumSet.of(OrderEvents.CONFIRM, OrderEvents.START_PREPARING, OrderEvents.MARK_READY);
             case "CUSTOMER":
                 eligibleEvents = EnumSet.of(OrderEvents.CANCEL);
+                break;
+            case "RESTAURANT_OWNER":
+                eligibleEvents = EnumSet.of(OrderEvents.CONFIRM, OrderEvents.START_PREPARING, OrderEvents.MARK_READY);
                 break;
             default:
                 eligibleEvents = EnumSet.noneOf(OrderEvents.class);
@@ -51,6 +52,16 @@ public class CommonOperations {
             return objectMapper.readValue(jsonString, new TypeReference<List<OrderMenuDetails>>() {});
         } catch (Exception e) {
             log.error("Error in converting json to object: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    public String getOrderMenuDetailsJson(List<OrderMenuDetails> orderMenuDetails) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(orderMenuDetails);
+        } catch (Exception e) {
+            log.error("Error in converting object to json: {}", e.getMessage());
             return null;
         }
     }

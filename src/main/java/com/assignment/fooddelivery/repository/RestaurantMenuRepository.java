@@ -17,4 +17,5 @@ public interface RestaurantMenuRepository extends JpaRepository<RestaurantMenu, 
     
     // Find menu item by name for a specific restaurant
     RestaurantMenu findByRestaurantIdAndItemName(Long restaurantId, String itemName);
+    List<RestaurantMenu> findByItemName(String name);
 }
