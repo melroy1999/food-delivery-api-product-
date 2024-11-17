@@ -24,11 +24,15 @@ public class LoginDetails {
     private String username;
     private String password; // This will store the tokenized password
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name="user_role", nullable = false)
     private UserTypes userRole;
+    @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;
+    @Column(name = "is_archived", nullable = false)
     private boolean isArchived;
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     // Getters and Setters
