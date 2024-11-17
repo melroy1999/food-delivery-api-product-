@@ -47,10 +47,10 @@ public class Restaurant {
     @JoinColumn(name = "owner_id", nullable = false, foreignKey = @ForeignKey(name = "fk_restaurants_owner_id"))
     private RestaurantOwner owner;
 
-    @Column(name = "is_deleted",nullable = false)
+    @Column(name="is_deleted", nullable = false)
     private boolean isDeleted = false;
 
-    @Column(name = "is_archived",nullable = false)
+    @Column(name="is_archived", nullable = false)
     private boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)

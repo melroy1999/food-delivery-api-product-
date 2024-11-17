@@ -12,4 +12,9 @@ public class Bcrypt {
         // Hash the password
         return passwordEncoder.encode(password);
     }
+
+    public boolean checkPassword(String password, String hashedPassword) {
+        // Check if password matches hashed password
+        return passwordEncoder.matches(password, hashedPassword);
+    }
 }

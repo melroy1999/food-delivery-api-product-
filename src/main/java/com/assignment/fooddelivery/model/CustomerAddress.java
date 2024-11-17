@@ -18,10 +18,10 @@ public class CustomerAddress {
     @Column(nullable = false, length = 255)
     private String address;
 
-    @Column(nullable = false)
+    @Column(name="is_deleted", nullable = false)
     private boolean isDeleted = false;
 
-    @Column(nullable = false)
+    @Column(name="is_archived", nullable = false)
     private boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)

@@ -16,22 +16,22 @@ public class RestaurantMenu {
     @JoinColumn(name = "restaurant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_restaurant_menus_restaurant_id"))
     private Restaurant restaurant;
 
-    @Column(nullable = false, length = 100)
+    @Column(name="item_name", nullable = false, length = 100)
     private String itemName;
 
-    @Column(nullable = false, length = 255)
+    @Column(name="item_description", nullable = false, length = 255)
     private String itemDescription;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name="item_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal itemPrice;
 
-    @Column(nullable = false)
+    @Column(name="is_available", nullable = false)
     private boolean isAvailable = true;
 
-    @Column(nullable = false)
+    @Column(name="is_deleted", nullable = false)
     private boolean isDeleted = false;
 
-    @Column(nullable = false)
+    @Column(name="is_archived", nullable = false)
     private boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)
