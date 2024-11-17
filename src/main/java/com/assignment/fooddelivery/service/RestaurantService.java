@@ -15,11 +15,13 @@ import com.assignment.fooddelivery.dto.restaurant.OrderLogResponse;
 import com.assignment.fooddelivery.dto.restaurant.OrderResponse;
 import com.assignment.fooddelivery.dto.restaurant.RestaurantOwnerRequest;
 import com.assignment.fooddelivery.dto.restaurant.RestaurantOwnerResponse;
+import com.assignment.fooddelivery.enums.UserTypes;
 import com.assignment.fooddelivery.exception.ServiceException;
 import com.assignment.fooddelivery.model.Order;
 import com.assignment.fooddelivery.model.OrderLog;
 import com.assignment.fooddelivery.model.Restaurant;
 import com.assignment.fooddelivery.model.RestaurantMenu;
+import com.assignment.fooddelivery.model.RestaurantOwner;
 import com.assignment.fooddelivery.repository.OrderLogRepository;
 import com.assignment.fooddelivery.repository.OrderRepository;
 import com.assignment.fooddelivery.repository.RestaurantMenuRepository;
@@ -42,6 +44,8 @@ public class RestaurantService {
 	private OrderLogRepository orderLogRepository;
 	@Autowired
 	private OrderRepository orderRepository;
+	@Autowired
+    private LoginService loginService;
 
 	public Restaurant getRestaurantById(Long restaurantId) {
 		// Fetch restaurant details from database
@@ -54,36 +58,43 @@ public class RestaurantService {
 
 	public RestaurantOwnerResponse registerOwner(RestaurantOwnerRequest restaurantRequest) {
 		try {
-			// Check if a restaurant with the given contact number already exists
-			Restaurant existingRestaurant = restaurantRepository.findByContactNo(restaurantRequest.getContactNo());
-			if (existingRestaurant != null) {
-				log.error("Restaurant with contact number {} already exists", restaurantRequest.getContactNo());
-				throw new ServiceException(HttpStatus.BAD_REQUEST,
-						"Restaurant with contact number " + restaurantRequest.getContactNo() + " already exists");
+			RestaurantOwner owner;
+
+			// Check if an ownerId is provided in the request
+			if (restaurantRequest.getOwnerId() != null) {
+				// Look for an existing owner
+				owner = restaurantOwnerRepository.findById(restaurantRequest.getOwnerId())
+						.orElseThrow(() -> new ServiceException(HttpStatus.BAD_REQUEST, "Owner not found"));
+			} else {
+				// No ownerId provided, so create a new owner
+				owner = RestaurantOwner.builder().name(restaurantRequest.getName())
+						.mobileNumber(restaurantRequest.getContactNo()).email(restaurantRequest.getEmail())
+						.isDeleted(false).isArchived(false).createdAt(LocalDateTime.now())
+						.updatedAt(LocalDateTime.now()).build();
+
+				// Save the new owner to the database
+				owner = restaurantOwnerRepository.save(owner);
 			}
 
-			// Create a new restaurant
+			// Proceed to create a new restaurant
 			Restaurant newRestaurant = Restaurant.builder().name(restaurantRequest.getName())
 					.address(restaurantRequest.getAddress()).contactNo(restaurantRequest.getContactNo())
 					.openingDays(restaurantRequest.getOpeningDays()).openingTime(restaurantRequest.getOpeningTime())
 					.closingTime(restaurantRequest.getClosingTime()).dineIn(restaurantRequest.isDineIn())
-					.takeAway(restaurantRequest.isTakeAway()).isDeleted(false).isArchived(false)
-					.createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
+					.takeAway(restaurantRequest.isTakeAway()).owner(owner) // Assign the owner to the restaurant
+					.isDeleted(false).isArchived(false).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
+					.build();
 
 			// Save the new restaurant to the database
 			restaurantRepository.save(newRestaurant);
-
-			log.info("Restaurant added successfully with contact number: {}", restaurantRequest.getContactNo());
-
+			loginService.addLoginDetails(restaurantRequest.getContactNo(), restaurantRequest.getPassword(), UserTypes.RESTAURANT.name());
 			return RestaurantOwnerResponse.builder().restaurantId(newRestaurant.getId()).name(newRestaurant.getName())
 					.address(newRestaurant.getAddress()).contactNo(newRestaurant.getContactNo()).status("ACTIVE")
 					.dineIn(newRestaurant.isDineIn()).takeAway(newRestaurant.isTakeAway()).build();
 
 		} catch (ServiceException e) {
-			log.error("Error while registering restaurant: {}", e.getMessage());
 			throw e;
 		} catch (Exception e) {
-			log.error("Error while registering restaurant: {}", e.getMessage());
 			throw new ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
 		}
 	}

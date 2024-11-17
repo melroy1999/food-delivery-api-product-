@@ -21,10 +21,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable()
                 .authorizeRequests()
                 .antMatchers("/api/delivery-agent/register").permitAll()
+                .antMatchers("/restaurant-owner/register").permitAll()
                 .antMatchers("/api/login").permitAll()
                 .antMatchers("/api/delivery-agent/**").hasRole("DELIVERY_AGENT") // Restricting access
                 .antMatchers("/api/order/**").hasRole("CUSTOMER") // Restricting access
                 .antMatchers("/api/delivery/**").hasRole("DELIVERY_AGENT") // Restricting access
+                .antMatchers("/restaurant/**").hasRole("RESTAURANT")
+                .antMatchers("/menu/**").hasRole("RESTAURANT")
+                .antMatchers("/update-restaurant/**").hasRole("RESTAURANT")
+                .antMatchers("/order/**").hasRole("RESTAURANT")
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling()

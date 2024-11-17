@@ -1,8 +1,17 @@
 package com.assignment.fooddelivery.model;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "restaurant_owners")
 public class RestaurantOwner {

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,8 +22,10 @@ import com.assignment.fooddelivery.dto.restaurant.RestaurantOwnerResponse;
 import com.assignment.fooddelivery.service.RestaurantService;
 import com.assignment.fooddelivery.statemachine.OrderStates;
 
-import io.swagger.v3.oas.annotations.Operation;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
+@CrossOrigin(origins = "*")
 @RestController
 public class RestaurantController {
 	@Autowired
@@ -30,12 +33,6 @@ public class RestaurantController {
 
 	// Endpoint to register a new restaurant
 	@PostMapping("/restaurant-owner/register")
-	@Operation(summary = "Register a restaurant owner", 
-    description = "Registering Restaurant owner",
-    responses = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Registered successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Restaurant with the contact no already exists")
-    })
 	public ApiResponse<RestaurantOwnerResponse> registerOwner(@RequestBody RestaurantOwnerRequest ownerRequest) {
 		try {
 			RestaurantOwnerResponse response = restaurantService.registerOwner(ownerRequest);
