@@ -23,7 +23,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/delivery-agent/register").permitAll()
                 .antMatchers("/api/login").permitAll()
                 .antMatchers("/api/customer/register").permitAll() // Restricting access
-                .antMatchers("/api/delivery-agent/**").hasAnyRole("DELIVERY_AGENT", "ADMIN") // Restricting access
+                .antMatchers("/api/delivery-agent/**").hasRole("DELIVERY_AGENT") // Restricting access
                 .antMatchers("/api/customer/**").hasRole("CUSTOMER") // Restricting access
                 .antMatchers("/api/delivery/**").hasRole("DELIVERY_AGENT") // Restricting access
                 .antMatchers("/api/restaurant/owner/register").permitAll()
