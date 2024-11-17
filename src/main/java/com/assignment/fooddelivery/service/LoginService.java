@@ -30,6 +30,8 @@ public class LoginService {
                     .username(username)
                     .password(bcrypt.getHashedPassword(password))
                     .userRole(UserTypes.valueOf(userRole))
+                    .isDeleted(false)
+                    .isArchived(false)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
                     .build();

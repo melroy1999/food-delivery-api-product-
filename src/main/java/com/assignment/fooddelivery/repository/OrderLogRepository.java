@@ -10,4 +10,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface OrderLogRepository extends JpaRepository<OrderLog, Long> {
 	public List<OrderLog> findByOrderIdAndIsDeletedFalse(Long orderId);
+	List<OrderLog> findByOrderId(Long orderId);
 }

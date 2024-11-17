@@ -2,6 +2,7 @@ package com.assignment.fooddelivery.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.assignment.fooddelivery.dto.delivery.ProcessDeliveryResponse;
@@ -46,6 +47,8 @@ public class RestaurantService {
 	private ProcessOrderEvent processOrderEvent;
 	@Autowired
 	private OrderService orderService;
+	@Autowired
+	private RestaurantMenuRepository menuRepository;
 
 	public Restaurant getRestaurantById(Long restaurantId) {
 		// Fetch restaurant details from database
@@ -65,13 +68,14 @@ public class RestaurantService {
 				throw new ServiceException(HttpStatus.BAD_REQUEST,
 						"Restaurant with contact number " + restaurantRequest.getContactNo() + " already exists");
 			}
+			RestaurantOwner restaurantOwner = restaurantOwnerRepository.findById(restaurantRequest.getOwnerId()).orElse(null);
 
 			// Create a new restaurant
 			Restaurant newRestaurant = Restaurant.builder().name(restaurantRequest.getName())
 					.address(restaurantRequest.getAddress()).contactNo(restaurantRequest.getContactNo())
 					.openingDays(restaurantRequest.getOpeningDays()).openingTime(restaurantRequest.getOpeningTime())
 					.closingTime(restaurantRequest.getClosingTime()).dineIn(restaurantRequest.isDineIn())
-					.takeAway(restaurantRequest.isTakeAway()).isDeleted(false).isArchived(false)
+					.takeAway(restaurantRequest.isTakeAway()).owner(restaurantOwner).isDeleted(false).isArchived(false)
 					.createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
 
 			// Save the new restaurant to the database
@@ -81,7 +85,7 @@ public class RestaurantService {
 
 			return RestaurantResponse.builder().restaurantId(newRestaurant.getId()).name(newRestaurant.getName())
 					.address(newRestaurant.getAddress()).contactNo(newRestaurant.getContactNo()).status("ACTIVE")
-					.dineIn(newRestaurant.getDineIn()).takeAway(newRestaurant.getTakeAway()).build();
+					.dineIn(newRestaurant.getDineIn()).takeAway(newRestaurant.getTakeAway()).ownerId(restaurantOwner.getId()).build();
 
 		} catch (ServiceException e) {
 			log.error("Error while registering restaurant: {}", e.getMessage());
@@ -317,5 +321,19 @@ public class RestaurantService {
 			throw new ServiceException(HttpStatus.NOT_FOUND, "Restaurant with ID " + restaurantId + " not found");
 		}
 		return restaurant.getOwner().getId().equals(restaurantOwnerId);
+	}
+
+	public List<RestaurantMenu> searchMenus(String query, Optional<String> type) {
+		// Search for menus based on the query
+		List<RestaurantMenu> menus = menuRepository.findByItemName(query);
+
+		// Filter by type if present
+		if (type.isPresent()) {
+			menus = menus.stream()
+					.filter(menu -> menu.getItemDescription().contains(type.get()))
+					.collect(Collectors.toList());
+		}
+
+		return menus;
 	}
 }
