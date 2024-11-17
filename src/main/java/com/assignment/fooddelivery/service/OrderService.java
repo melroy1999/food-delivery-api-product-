@@ -1,5 +1,6 @@
 package com.assignment.fooddelivery.service;
 
+import com.assignment.fooddelivery.dto.delivery.ReadyToDeliverOrder;
 import com.assignment.fooddelivery.exception.ServiceException;
 import com.assignment.fooddelivery.model.DeliveryAgent;
 import com.assignment.fooddelivery.model.Order;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class OrderService {
@@ -65,5 +67,13 @@ public class OrderService {
         catch (Exception e) {
             throw new ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while updating order log");
         }
+    }
+
+    public List<Order> getReadyForDeliveryOrders(Long deliveryAgentId, Long restaurantId) {
+        List<Order> eligibleOrders = orderRepository.getReadyForDeliveryOrders(deliveryAgentId, restaurantId);
+        if(eligibleOrders.isEmpty()) {
+            throw new ServiceException(HttpStatus.BAD_REQUEST, "No orders found ready for delivery agent: " + deliveryAgentId);
+        }
+        return eligibleOrders;
     }
 }

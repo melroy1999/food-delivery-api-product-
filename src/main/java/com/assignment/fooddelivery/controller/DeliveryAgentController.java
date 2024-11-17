@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @CrossOrigin(origins = "*")
 @RestController
@@ -24,7 +26,7 @@ public class DeliveryAgentController {
             return ApiResponse.<DeliveryAgentResponse>builder().status("success").data(response).build();
         } catch (ServiceException e) {
             log.error("ServiceException occured while adding delivery agent with mobile number: {}", deliveryAgent.getMobileNumber(), e);
-            return ApiResponse.<DeliveryAgentResponse>builder()
+            return ApiResponse.<DeliveryAgentResponse>builder().status("failed")
                     .error(ErrorMessage.builder().error("Error while create delivery agent master").description(e.getMessage()).build())
                     .build();
         }
@@ -42,7 +44,7 @@ public class DeliveryAgentController {
             return ApiResponse.<DeliveryAgentResponse>builder().status("success").data(response).build();
         } catch (ServiceException e) {
             log.error("ServiceException occured while updating delivery agent with id: {}", deliveryAgent.getId(), e);
-            return ApiResponse.<DeliveryAgentResponse>builder()
+            return ApiResponse.<DeliveryAgentResponse>builder().status("failed")
                     .error(ErrorMessage.builder().error("Error while updating delivery agent master").description(e.getMessage()).build())
                     .build();
         }
@@ -50,6 +52,25 @@ public class DeliveryAgentController {
             log.error("Exception occured while updating delivery agent with id: {}", deliveryAgent.getId(), e);
             return ApiResponse.<DeliveryAgentResponse>builder().status("failed").error(
                     ErrorMessage.builder().error("Error while updating delivery agent master").description(e.getMessage()).build()
+            ).build();
+        }
+    }
+
+    @GetMapping("/{id}/order-for-pickup")
+    public ApiResponse<List<ReadyToDeliverOrder>> getOrdersForPickup(@PathVariable("id") Long id) {
+        try {
+            List<ReadyToDeliverOrder> response = deliveryAgentService.getReadyForDeliveryOrders(id);
+            return ApiResponse.<List<ReadyToDeliverOrder>>builder().status("success").data(response).build();
+        } catch (ServiceException e) {
+            log.error("ServiceException occured while getting orders for pickup for delivery agent with id: {}", id, e);
+            return ApiResponse.<List<ReadyToDeliverOrder>>builder().status("failed")
+                    .error(ErrorMessage.builder().error("Error while getting orders for pickup").description(e.getMessage()).build())
+                    .build();
+        }
+        catch (Exception e) {
+            log.error("Exception occured while getting orders for pickup for delivery agent with id: {}", id, e);
+            return ApiResponse.<List<ReadyToDeliverOrder>>builder().status("failed").error(
+                    ErrorMessage.builder().error("Error while getting orders for pickup").description(e.getMessage()).build()
             ).build();
         }
     }

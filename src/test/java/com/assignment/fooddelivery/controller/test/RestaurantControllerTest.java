@@ -30,8 +30,8 @@ import com.assignment.fooddelivery.controller.RestaurantController;
 import com.assignment.fooddelivery.dto.restaurant.MenuItemRequest;
 import com.assignment.fooddelivery.dto.restaurant.MenuItemResponse;
 import com.assignment.fooddelivery.dto.restaurant.OrderResponse;
-import com.assignment.fooddelivery.dto.restaurant.RestaurantOwnerRequest;
-import com.assignment.fooddelivery.dto.restaurant.RestaurantOwnerResponse;
+import com.assignment.fooddelivery.dto.restaurant.RestaurantRequest;
+import com.assignment.fooddelivery.dto.restaurant.RestaurantResponse;
 import com.assignment.fooddelivery.service.RestaurantService;
 import com.assignment.fooddelivery.statemachine.OrderStates;
 
@@ -53,10 +53,10 @@ class RestaurantControllerTest {
 
 	@Test
 	void testRegisterOwner_Success() throws Exception {
-		RestaurantOwnerRequest ownerRequest = new RestaurantOwnerRequest();
-		RestaurantOwnerResponse ownerResponse = new RestaurantOwnerResponse();
+		RestaurantRequest ownerRequest = new RestaurantRequest();
+		RestaurantResponse ownerResponse = new RestaurantResponse();
 
-		when(restaurantService.registerOwner(any(RestaurantOwnerRequest.class))).thenReturn(ownerResponse);
+		when(restaurantService.registerRestaurant(any(RestaurantRequest.class))).thenReturn(ownerResponse);
 
 		mockMvc.perform(post("/restaurant-owner/register").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"name\": \"Test Owner\", \"email\": \"owner@test.com\"}")).andExpect(status().isOk())
@@ -79,10 +79,10 @@ class RestaurantControllerTest {
 
 	@Test
 	void testUpdateRestaurant_Success() throws Exception {
-		RestaurantOwnerRequest updatedRequest = new RestaurantOwnerRequest();
-		RestaurantOwnerResponse updatedResponse = new RestaurantOwnerResponse();
+		RestaurantRequest updatedRequest = new RestaurantRequest();
+		RestaurantResponse updatedResponse = new RestaurantResponse();
 
-		when(restaurantService.updateRestaurant(anyLong(), any(RestaurantOwnerRequest.class)))
+		when(restaurantService.updateRestaurant(anyLong(), any(RestaurantRequest.class)))
 				.thenReturn(updatedResponse);
 
 		mockMvc.perform(put("/update-restaurant/1").contentType(MediaType.APPLICATION_JSON)

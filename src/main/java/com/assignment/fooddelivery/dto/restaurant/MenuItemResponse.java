@@ -16,5 +16,5 @@ public class MenuItemResponse {
     private String itemName;  
     private String itemDescription;  
     private BigDecimal itemPrice;  
-    private boolean isAvailable;  
+    private Boolean isAvailable;
 }

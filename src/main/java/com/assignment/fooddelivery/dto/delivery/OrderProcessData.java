@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DeliveryProcessData {
+public class OrderProcessData {
     private String orderEvent;
     private String comment;
 }
