@@ -38,20 +38,20 @@ public class Restaurant {
     private String closingTime;
 
     @Column(name = "dine_in",nullable = false)
-    private boolean dineIn = false;
+    private Boolean dineIn = false;
 
     @Column(name = "take_away",nullable = false)
-    private boolean takeAway = false;
+    private Boolean takeAway = false;
 
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false, foreignKey = @ForeignKey(name = "fk_restaurants_owner_id"))
     private RestaurantOwner owner;
 
     @Column(name="is_deleted", nullable = false)
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
     @Column(name="is_archived", nullable = false)
-    private boolean isArchived = false;
+    private Boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

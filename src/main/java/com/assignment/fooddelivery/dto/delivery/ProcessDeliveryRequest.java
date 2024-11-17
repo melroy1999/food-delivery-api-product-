@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProcessDeliveryRequest {
     private Long deliveryAgentId;
-    private DeliveryProcessData deliveryStatus;
+    private OrderProcessData orderStatus;
 }

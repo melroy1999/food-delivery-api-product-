@@ -13,5 +13,5 @@ public interface RestaurantOwnerRepository extends JpaRepository<RestaurantOwner
     Optional<RestaurantOwner> findById(Long id);
 
     // Custom method to find a restaurant owner by their mobile number, if needed for other validations
-    Optional<RestaurantOwner> findByMobileNumber(String mobileNumber);
+    RestaurantOwner findByMobileNumber(String mobileNumber);
 }

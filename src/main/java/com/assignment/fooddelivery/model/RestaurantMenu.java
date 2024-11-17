@@ -38,13 +38,13 @@ public class RestaurantMenu {
 	private BigDecimal itemPrice;
 
 	@Column(name = "is_available", nullable = false)
-	private boolean isAvailable = true;
+	private Boolean isAvailable = true;
 
 	@Column(name = "is_deleted", nullable = false)
-	private boolean isDeleted = false;
+	private Boolean isDeleted = false;
 
 	@Column(name = "is_archived", nullable = false)
-	private boolean isArchived = false;
+	private Boolean isArchived = false;
 
 	@Column(name = "created_at", updatable = false)
 	private LocalDateTime createdAt = LocalDateTime.now();

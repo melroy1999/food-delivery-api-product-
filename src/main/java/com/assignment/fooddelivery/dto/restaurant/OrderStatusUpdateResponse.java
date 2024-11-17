@@ -1,5 +1,6 @@
 package com.assignment.fooddelivery.dto.restaurant;
 
+import com.assignment.fooddelivery.statemachine.OrderStates;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,9 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RestaurantOwnerResponse {
-    private Long ownerId;
-    private String name;
-    private String mobileNumber;
-    private String email;
+public class OrderStatusUpdateResponse {
+    private Long orderId;
+    private OrderStates orderStatus;
 }
