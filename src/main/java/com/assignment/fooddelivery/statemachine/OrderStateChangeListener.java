@@ -20,6 +20,8 @@ public class OrderStateChangeListener {
 
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private ProcessOrderEvent processOrderEvent;
 
     @OnStateChanged
     public void onStateChanged(StateMachine<OrderStates, OrderEvents> stateMachine) {
@@ -35,6 +37,7 @@ public class OrderStateChangeListener {
         Order order = orderService.getOrderByOrderId(orderId);
 
         if(order.getOrderStatus() != newState && order.getOrderStatus().ordinal() < newState.ordinal()) {
+//            processOrderEvent.persistState(orderId, newState);
             order.setOrderStatus(newState);
             order.setUpdatedAt(LocalDateTime.now());
             orderService.updateOrder(order);
