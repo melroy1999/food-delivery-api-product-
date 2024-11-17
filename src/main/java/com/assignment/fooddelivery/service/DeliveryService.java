@@ -2,6 +2,8 @@ package com.assignment.fooddelivery.service;
 
 import com.assignment.fooddelivery.dto.delivery.ProcessDeliveryRequest;
 import com.assignment.fooddelivery.dto.delivery.ProcessDeliveryResponse;
+import com.assignment.fooddelivery.dto.delivery.ReadyToDeliverOrder;
+import com.assignment.fooddelivery.dto.order.OrderMenuDetails;
 import com.assignment.fooddelivery.enums.UserTypes;
 import com.assignment.fooddelivery.exception.ServiceException;
 import com.assignment.fooddelivery.model.DeliveryAgent;
@@ -17,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,7 +36,7 @@ public class DeliveryService {
 
     public ProcessDeliveryResponse processOrderDelivery(ProcessDeliveryRequest processDeliveryRequest, Long orderId) {
         try {
-            if(!commonOperations.isEligibleOrderEvent(UserTypes.DELIVERY_AGENT.name(), OrderEvents.valueOf(processDeliveryRequest.getDeliveryStatus().getOrderEvent()))) {
+            if(!commonOperations.isEligibleOrderEvent(UserTypes.DELIVERY_AGENT.name(), OrderEvents.valueOf(processDeliveryRequest.getOrderStatus().getOrderEvent()))) {
                 log.error("Delivery agent is not eligible to perform this action");
                 throw new ServiceException(HttpStatus.BAD_REQUEST, "Delivery agent is not eligible to perform this action");
             }
@@ -41,23 +45,23 @@ public class DeliveryService {
                 log.error("Delivery agent with id {} not found", processDeliveryRequest.getDeliveryAgentId());
                 throw new ServiceException(HttpStatus.BAD_REQUEST, "Delivery agent with id " + processDeliveryRequest.getDeliveryAgentId() + " not found");
             }
-            if (!isOrderEventValid(processDeliveryRequest.getDeliveryStatus().getOrderEvent())) {
-                log.error("Invalid order status: {}", processDeliveryRequest.getDeliveryStatus().getOrderEvent());
-                throw new ServiceException(HttpStatus.BAD_REQUEST, "Invalid order status: " + processDeliveryRequest.getDeliveryStatus().getOrderEvent());
+            if (!commonOperations.isOrderEventValid(processDeliveryRequest.getOrderStatus().getOrderEvent())) {
+                log.error("Invalid order status: {}", processDeliveryRequest.getOrderStatus().getOrderEvent());
+                throw new ServiceException(HttpStatus.BAD_REQUEST, "Invalid order status: " + processDeliveryRequest.getOrderStatus().getOrderEvent());
             }
             Order order = orderService.getOrderByOrderId(orderId);
             if (order.getOrderStatus() == OrderStates.DELIVERED) {
                 log.error("Order with id {} is already delivered", orderId);
                 throw new ServiceException(HttpStatus.BAD_REQUEST, "Order with id " + orderId + " is already delivered");
             }
-            OrderEvents orderEvent = OrderEvents.valueOf(processDeliveryRequest.getDeliveryStatus().getOrderEvent());
-            OrderStates orderStates = processOrderEvent.process(order.getId(), orderEvent, processDeliveryRequest.getDeliveryStatus().getComment(), UserTypes.DELIVERY_AGENT, deliveryAgent.getId());
+            OrderEvents orderEvent = OrderEvents.valueOf(processDeliveryRequest.getOrderStatus().getOrderEvent());
+            OrderStates orderStates = processOrderEvent.process(order.getId(), orderEvent, processDeliveryRequest.getOrderStatus().getComment(), UserTypes.DELIVERY_AGENT, deliveryAgent.getId());
             if(order.getOrderStatus().ordinal() >= orderStates.ordinal()) {
                 log.error("Order state transition failed for order with id: {}", orderId);
                 throw new ServiceException(HttpStatus.BAD_REQUEST, "Order state transition failed for order with id: " + orderId);
             }
             // Process the delivery
-            if (processDeliveryRequest.getDeliveryStatus().getOrderEvent().equals(OrderEvents.ACCEPT_DELIVERY.name())) {
+            if (processDeliveryRequest.getOrderStatus().getOrderEvent().equals(OrderEvents.ACCEPT_DELIVERY.name())) {
                 orderService.addOrderDeliveryAgentMapping(order, deliveryAgent);
             }
             order = orderService.getOrderByOrderId(orderId);
@@ -75,11 +79,5 @@ public class DeliveryService {
             log.error("Error while processing delivery: {}", e.getMessage());
             throw e;
         }
-    }
-
-    private boolean isOrderEventValid(String orderStatus) {
-        return EnumSet.allOf(OrderEvents.class)
-                .stream()
-                .anyMatch(state -> state.name().equals(orderStatus));
     }
 }

@@ -1,6 +1,12 @@
 package com.assignment.fooddelivery.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +14,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -29,10 +36,10 @@ public class RestaurantOwner {
     private String email;
 
     @Column(name="is_deleted", nullable = false)
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
     @Column(name="is_archived", nullable = false)
-    private boolean isArchived = false;
+    private Boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

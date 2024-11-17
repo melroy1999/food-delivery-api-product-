@@ -19,16 +19,16 @@ public class RestaurantType {
     private String cuisine;
 
     @Column(nullable = false)
-    private boolean veg = false;
+    private Boolean veg = false;
 
     @Column(name="non_veg", nullable = false)
-    private boolean nonVeg = false;
+    private Boolean nonVeg = false;
 
     @Column(name="is_deleted", nullable = false)
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
     @Column(name="is_archived", nullable = false)
-    private boolean isArchived = false;
+    private Boolean isArchived = false;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

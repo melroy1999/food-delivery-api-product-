@@ -4,5 +4,5 @@ public enum UserTypes {
     ADMIN,
     CUSTOMER,
     DELIVERY_AGENT,
-    RESTAURANT
+    RESTAURANT_OWNER
 }
