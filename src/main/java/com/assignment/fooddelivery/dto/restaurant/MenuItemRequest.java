@@ -11,9 +11,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MenuItemRequest {
-    private Long id; 
     private String itemName;
     private String itemDescription;
     private BigDecimal itemPrice;
-    private boolean isAvailable;
+    private Boolean isAvailable;
 }

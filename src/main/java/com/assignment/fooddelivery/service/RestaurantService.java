@@ -1,31 +1,27 @@
 package com.assignment.fooddelivery.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.assignment.fooddelivery.dto.delivery.ProcessDeliveryResponse;
+import com.assignment.fooddelivery.dto.restaurant.*;
+import com.assignment.fooddelivery.model.*;
+import com.assignment.fooddelivery.statemachine.OrderEvents;
+import com.assignment.fooddelivery.statemachine.OrderStates;
+import com.assignment.fooddelivery.statemachine.ProcessOrderEvent;
+import com.assignment.fooddelivery.utils.CommonOperations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.assignment.fooddelivery.dto.restaurant.MenuItemRequest;
-import com.assignment.fooddelivery.dto.restaurant.MenuItemResponse;
-import com.assignment.fooddelivery.dto.restaurant.OrderLogResponse;
-import com.assignment.fooddelivery.dto.restaurant.OrderResponse;
-import com.assignment.fooddelivery.dto.restaurant.RestaurantOwnerRequest;
-import com.assignment.fooddelivery.dto.restaurant.RestaurantOwnerResponse;
 import com.assignment.fooddelivery.exception.ServiceException;
-import com.assignment.fooddelivery.model.Order;
-import com.assignment.fooddelivery.model.OrderLog;
-import com.assignment.fooddelivery.model.Restaurant;
-import com.assignment.fooddelivery.model.RestaurantMenu;
 import com.assignment.fooddelivery.repository.OrderLogRepository;
 import com.assignment.fooddelivery.repository.OrderRepository;
 import com.assignment.fooddelivery.repository.RestaurantMenuRepository;
 import com.assignment.fooddelivery.repository.RestaurantOwnerRepository;
 import com.assignment.fooddelivery.repository.RestaurantRepository;
-import com.assignment.fooddelivery.statemachine.OrderStates;
+import com.assignment.fooddelivery.enums.UserTypes;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,6 +38,14 @@ public class RestaurantService {
 	private OrderLogRepository orderLogRepository;
 	@Autowired
 	private OrderRepository orderRepository;
+	@Autowired
+	private LoginService loginService;
+	@Autowired
+	private CommonOperations commonOperations;
+	@Autowired
+	private ProcessOrderEvent processOrderEvent;
+	@Autowired
+	private OrderService orderService;
 
 	public Restaurant getRestaurantById(Long restaurantId) {
 		// Fetch restaurant details from database
@@ -52,7 +56,7 @@ public class RestaurantService {
 		return restaurantRepository.findAll();
 	}
 
-	public RestaurantOwnerResponse registerOwner(RestaurantOwnerRequest restaurantRequest) {
+	public RestaurantResponse registerRestaurant(RestaurantRequest restaurantRequest) {
 		try {
 			// Check if a restaurant with the given contact number already exists
 			Restaurant existingRestaurant = restaurantRepository.findByContactNo(restaurantRequest.getContactNo());
@@ -75,9 +79,9 @@ public class RestaurantService {
 
 			log.info("Restaurant added successfully with contact number: {}", restaurantRequest.getContactNo());
 
-			return RestaurantOwnerResponse.builder().restaurantId(newRestaurant.getId()).name(newRestaurant.getName())
+			return RestaurantResponse.builder().restaurantId(newRestaurant.getId()).name(newRestaurant.getName())
 					.address(newRestaurant.getAddress()).contactNo(newRestaurant.getContactNo()).status("ACTIVE")
-					.dineIn(newRestaurant.isDineIn()).takeAway(newRestaurant.isTakeAway()).build();
+					.dineIn(newRestaurant.getDineIn()).takeAway(newRestaurant.getTakeAway()).build();
 
 		} catch (ServiceException e) {
 			log.error("Error while registering restaurant: {}", e.getMessage());
@@ -93,12 +97,10 @@ public class RestaurantService {
 		Restaurant restaurant = restaurantRepository.findById(restaurantId).orElseThrow(
 				() -> new ServiceException(HttpStatus.NOT_FOUND, "Restaurant with ID " + restaurantId + " not found"));
 
-		List<RestaurantMenu> restaurantMenuItems = menuItems.stream().map(menuItemRequest -> {
-			return RestaurantMenu.builder().restaurant(restaurant).itemName(menuItemRequest.getItemName())
-					.itemDescription(menuItemRequest.getItemDescription()).itemPrice(menuItemRequest.getItemPrice())
-					.isAvailable(menuItemRequest.isAvailable()).isDeleted(false).isArchived(false)
-					.createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
-		}).collect(Collectors.toList());
+		List<RestaurantMenu> restaurantMenuItems = menuItems.stream().map(menuItemRequest -> RestaurantMenu.builder().restaurant(restaurant).itemName(menuItemRequest.getItemName())
+                .itemDescription(menuItemRequest.getItemDescription()).itemPrice(menuItemRequest.getItemPrice())
+                .isAvailable(menuItemRequest.getIsAvailable()).isDeleted(false).isArchived(false)
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build()).collect(Collectors.toList());
 
 		// Save the list of RestaurantMenu items
 		restaurantMenuRepository.saveAll(restaurantMenuItems);
@@ -107,13 +109,13 @@ public class RestaurantService {
 
 			return MenuItemResponse.builder().id(menuItem.getId()).itemName(menuItem.getItemName())
 					.itemDescription(menuItem.getItemDescription()).itemPrice(menuItem.getItemPrice())
-					.isAvailable(menuItem.isAvailable()).build();
+					.isAvailable(menuItem.getIsAvailable()).build();
 		}).collect(Collectors.toList());
 
 		return response;
 	}
 
-	public RestaurantOwnerResponse updateRestaurant(Long restaurantId, RestaurantOwnerRequest restaurantRequest) {
+	public RestaurantResponse updateRestaurant(Long restaurantId, RestaurantRequest restaurantRequest) {
 		try {
 			// Check if the restaurant exists
 			Restaurant existingRestaurant = restaurantRepository.findById(restaurantId)
@@ -132,7 +134,6 @@ public class RestaurantService {
 			// Update the restaurant details
 			existingRestaurant.setName(restaurantRequest.getName());
 			existingRestaurant.setAddress(restaurantRequest.getAddress());
-			existingRestaurant.setContactNo(restaurantRequest.getContactNo());
 			existingRestaurant.setOpeningDays(restaurantRequest.getOpeningDays());
 			existingRestaurant.setOpeningTime(restaurantRequest.getOpeningTime());
 			existingRestaurant.setClosingTime(restaurantRequest.getClosingTime());
@@ -145,10 +146,10 @@ public class RestaurantService {
 
 			log.info("Restaurant updated successfully with ID: {}", restaurantId);
 
-			return RestaurantOwnerResponse.builder().restaurantId(existingRestaurant.getId())
+			return RestaurantResponse.builder().restaurantId(existingRestaurant.getId())
 					.name(existingRestaurant.getName()).address(existingRestaurant.getAddress())
-					.contactNo(existingRestaurant.getContactNo()).status("ACTIVE").dineIn(existingRestaurant.isDineIn())
-					.takeAway(existingRestaurant.isTakeAway()).build();
+					.contactNo(existingRestaurant.getContactNo()).status("ACTIVE").dineIn(existingRestaurant.getDineIn())
+					.takeAway(existingRestaurant.getTakeAway()).build();
 
 		} catch (ServiceException e) {
 			log.error("Error while updating restaurant: {}", e.getMessage());
@@ -159,44 +160,23 @@ public class RestaurantService {
 		}
 	}
 
-	public List<MenuItemResponse> updateMenuItem(Long restaurantId, List<MenuItemRequest> menuItems) {
+	public MenuItemResponse updateMenuItem(Long itemId, MenuItemRequest menuItems) {
 		try {
-
-			Restaurant restaurant = restaurantRepository.findById(restaurantId)
-					.orElseThrow(() -> new ServiceException(HttpStatus.NOT_FOUND,
-							"Restaurant with ID " + restaurantId + " not found"));
-
-			List<RestaurantMenu> updatedMenuItems = new ArrayList<>();
-
-			for (MenuItemRequest menuItemRequest : menuItems) {
-
-				RestaurantMenu existingMenuItem = restaurantMenuRepository.findById(menuItemRequest.getId())
+				RestaurantMenu existingMenuItem = restaurantMenuRepository.findById(itemId)
 						.orElseThrow(() -> new ServiceException(HttpStatus.NOT_FOUND,
-								"Menu item with ID " + menuItemRequest.getId() + " not found"));
+								"Menu item with ID " + itemId + " not found"));
 
-				if (!existingMenuItem.getRestaurant().getId().equals(restaurantId)) {
-					throw new ServiceException(HttpStatus.BAD_REQUEST,
-							"Menu item does not belong to the specified restaurant");
-				}
-
-				existingMenuItem.setItemName(menuItemRequest.getItemName());
-				existingMenuItem.setItemDescription(menuItemRequest.getItemDescription());
-				existingMenuItem.setItemPrice(menuItemRequest.getItemPrice());
-				existingMenuItem.setAvailable(menuItemRequest.isAvailable());
+				existingMenuItem.setItemName(menuItems.getItemName());
+				existingMenuItem.setItemDescription(menuItems.getItemDescription());
+				existingMenuItem.setItemPrice(menuItems.getItemPrice());
+				existingMenuItem.setIsAvailable(menuItems.getIsAvailable());
 				existingMenuItem.setUpdatedAt(LocalDateTime.now());
 
-				updatedMenuItems.add(existingMenuItem);
-			}
+			restaurantMenuRepository.save(existingMenuItem);
 
-			restaurantMenuRepository.saveAll(updatedMenuItems);
-
-			List<MenuItemResponse> response = updatedMenuItems.stream().map(menuItem -> {
-				return MenuItemResponse.builder().id(menuItem.getId()).itemName(menuItem.getItemName())
-						.itemDescription(menuItem.getItemDescription()).itemPrice(menuItem.getItemPrice())
-						.isAvailable(menuItem.isAvailable()).build();
-			}).collect(Collectors.toList());
-
-			return response;
+			return MenuItemResponse.builder().id(existingMenuItem.getId()).itemName(existingMenuItem.getItemName())
+						.itemDescription(existingMenuItem.getItemDescription()).itemPrice(existingMenuItem.getItemPrice())
+						.isAvailable(existingMenuItem.getIsAvailable()).build();
 
 		} catch (ServiceException e) {
 			log.error("Error while updating menu items: {}", e.getMessage());
@@ -246,25 +226,45 @@ public class RestaurantService {
 		}
 	}
 
-	public OrderResponse updateOrderStatus(Long orderId, OrderStates newStatus) {
+	public OrderStatusUpdateResponse updateOrderStatus(Long orderId, OrderStatusUpdateRequest requestPayload) {
 		try {
 
 			Order order = orderRepository.findById(orderId).orElseThrow(
 					() -> new ServiceException(HttpStatus.NOT_FOUND, "Order with ID " + orderId + " not found"));
 
-			order.setOrderStatus(newStatus);
-			order.setUpdatedAt(LocalDateTime.now());
-			orderRepository.save(order);
+			if(!commonOperations.isEligibleOrderEvent(UserTypes.RESTAURANT_OWNER.name(), OrderEvents.valueOf(requestPayload.getOrderStatus().getOrderEvent()))) {
+				log.error("Restaurant owner is not eligible to perform this action");
+				throw new ServiceException(HttpStatus.BAD_REQUEST, "Restaurant owner is not eligible to perform this action");
+			}
 
-			OrderLog orderLog = OrderLog.builder().order(order).orderSubStatus("STATUS_UPDATED")
-					.remarks("Order status updated to " + newStatus).enteredBy("SYSTEM").enteredById(0L)
-					.isDeleted(false).isArchived(false).createdAt(LocalDateTime.now()).build();
-			orderLogRepository.save(orderLog);
-
-			return OrderResponse.builder().orderId(order.getId()).customerId(order.getCustomer().getId())
-					.customerName(order.getCustomer().getName()).orderStatus(order.getOrderStatus().toString())
-					.orderDetails(order.getOrderDetails()).totalAmount(order.getTotalAmount())
-					.createdAt(order.getCreatedAt()).updatedAt(order.getUpdatedAt()) // Updated timestamp
+			RestaurantOwner restaurantOwner = restaurantOwnerRepository.findById(requestPayload.getRestaurantOwnerId()).orElse(null);
+			if (restaurantOwner == null) {
+				log.error("Restaurant owner with id {} not found", requestPayload.getRestaurantOwnerId());
+				throw new ServiceException(HttpStatus.BAD_REQUEST, "Restaurant owner with id " + requestPayload.getRestaurantOwnerId() + " not found");
+			}
+			if(!isValidRestaurantOwner(restaurantOwner.getId(), order.getRestaurant().getId())) {
+				log.error("Restaurant owner with id {} is not the owner of the restaurant with id {}", restaurantOwner.getId(), order.getRestaurant().getId());
+				throw new ServiceException(HttpStatus.BAD_REQUEST, "Restaurant owner with id " + restaurantOwner.getId() + " is not the owner of the restaurant with id " + order.getRestaurant().getId());
+			}
+			if(!commonOperations.isOrderEventValid(requestPayload.getOrderStatus().getOrderEvent())) {
+				log.error("Invalid order status: {}", requestPayload.getOrderStatus().getOrderEvent());
+				throw new ServiceException(HttpStatus.BAD_REQUEST, "Invalid order status: " + requestPayload.getOrderStatus().getOrderEvent());
+			}
+			if (order.getOrderStatus() == OrderStates.DELIVERED || order.getOrderStatus() == OrderStates.CANCELLED) {
+				log.error("Order with id {} is {}", orderId, order.getOrderStatus());
+				throw new ServiceException(HttpStatus.BAD_REQUEST, "Order with id " + orderId + " is " + order.getOrderStatus());
+			}
+			OrderEvents orderEvent = OrderEvents.valueOf(requestPayload.getOrderStatus().getOrderEvent());
+			OrderStates orderStates = processOrderEvent.process(order.getId(), orderEvent, requestPayload.getOrderStatus().getComment(), UserTypes.RESTAURANT_OWNER, restaurantOwner.getId());
+			if(order.getOrderStatus().ordinal() >= orderStates.ordinal()) {
+				log.error("Order state transition failed for order with id: {}", orderId);
+				throw new ServiceException(HttpStatus.BAD_REQUEST, "Order state transition failed for order with id: " + orderId);
+			}
+			order = orderService.getOrderByOrderId(orderId);
+			log.info("Order states changed successfully by owner: {}", restaurantOwner.getId());
+			return OrderStatusUpdateResponse.builder()
+					.orderId(orderId)
+					.orderStatus(order.getOrderStatus())
 					.build();
 		} catch (ServiceException e) {
 			log.error("Error while updating order status: {}", e.getMessage());
@@ -273,5 +273,49 @@ public class RestaurantService {
 			log.error("Error while updating order status: {}", e.getMessage());
 			throw new ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
 		}
+	}
+	public RestaurantOwnerResponse registerRestaurantOwner(RestaurantOwnerRequest restaurantOwnerRequest) {
+		try {
+			// Check if a restaurant owner with the given contact number already exists
+			RestaurantOwner existingRestaurantOwner = restaurantOwnerRepository
+					.findByMobileNumber(restaurantOwnerRequest.getMobileNumber());
+
+			if(existingRestaurantOwner != null) {
+				log.error("Restaurant owner with contact number {} already exists", restaurantOwnerRequest.getMobileNumber());
+				throw new ServiceException(HttpStatus.BAD_REQUEST, "Restaurant owner with contact number " + restaurantOwnerRequest.getMobileNumber() + " already exists");
+			}
+            // Create a new restaurant owner
+			RestaurantOwner newRestaurantOwner = RestaurantOwner.builder().name(restaurantOwnerRequest.getName())
+					.mobileNumber(restaurantOwnerRequest.getMobileNumber()).email(restaurantOwnerRequest.getEmail())
+					.isDeleted(false).isArchived(false)
+					.createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
+
+			// Save the new restaurant owner to the database
+			restaurantOwnerRepository.save(newRestaurantOwner);
+
+			//create login details
+			loginService.addLoginDetails(restaurantOwnerRequest.getMobileNumber(), restaurantOwnerRequest.getPassword(), UserTypes.RESTAURANT_OWNER.name());
+
+			log.info("Restaurant owner added successfully with contact number: {}", restaurantOwnerRequest.getMobileNumber());
+
+			return RestaurantOwnerResponse.builder().ownerId(newRestaurantOwner.getId()).name(newRestaurantOwner.getName())
+					.mobileNumber(newRestaurantOwner.getMobileNumber()).email(newRestaurantOwner.getEmail()).build();
+
+		} catch (ServiceException e) {
+			log.error("Error while registering restaurant owner: {}", e.getMessage());
+			throw e;
+		} catch (Exception e) {
+			log.error("Error while registering restaurant owner: {}", e.getMessage());
+			throw new ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+		}
+	}
+
+	private Boolean isValidRestaurantOwner(Long restaurantOwnerId, Long restaurantId) {
+		Restaurant restaurant = restaurantRepository.findById(restaurantId).orElse(null);
+		if(restaurant == null) {
+			log.error("Restaurant with ID {} not found", restaurantId);
+			throw new ServiceException(HttpStatus.NOT_FOUND, "Restaurant with ID " + restaurantId + " not found");
+		}
+		return restaurant.getOwner().getId().equals(restaurantOwnerId);
 	}
 }

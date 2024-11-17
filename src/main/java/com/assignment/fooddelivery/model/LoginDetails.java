@@ -27,9 +27,9 @@ public class LoginDetails {
     @Column(name="user_role", nullable = false)
     private UserTypes userRole;
     @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted;
+    private Boolean isDeleted;
     @Column(name = "is_archived", nullable = false)
-    private boolean isArchived;
+    private Boolean isArchived;
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
     @Column(name = "updated_at")

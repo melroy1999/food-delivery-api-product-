@@ -4,15 +4,19 @@ import com.assignment.fooddelivery.enums.UserTypes;
 import com.assignment.fooddelivery.enums.VehicleTypes;
 import com.assignment.fooddelivery.exception.ServiceException;
 import com.assignment.fooddelivery.model.DeliveryAgent;
+import com.assignment.fooddelivery.model.Order;
 import com.assignment.fooddelivery.model.Restaurant;
 import com.assignment.fooddelivery.repository.DeliveryAgentRepository;
 import com.assignment.fooddelivery.statemachine.ProcessOrderEvent;
+import com.assignment.fooddelivery.utils.CommonOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -28,6 +32,8 @@ public class DeliveryAgentService {
     private OrderService orderService;
     @Autowired
     private ProcessOrderEvent processOrderEvent;
+    @Autowired
+    private CommonOperations commonOperations;
 
     public DeliveryAgentResponse addDeliveryAgent(DeliveryAgentRequest deliveryAgent) {
         try{
@@ -120,6 +126,35 @@ public class DeliveryAgentService {
         }
         catch (Exception e) {
             log.error("Error while updating delivery agent: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    public List<ReadyToDeliverOrder> getReadyForDeliveryOrders (Long deliveryAgentId) {
+        try {
+            DeliveryAgent deliveryAgent = deliveryAgentRepository.findById(deliveryAgentId).orElse(null);
+            if (deliveryAgent == null) {
+                log.error("Delivery agent with id {} not found", deliveryAgentId);
+                throw new ServiceException(HttpStatus.BAD_REQUEST, "Delivery agent with id " + deliveryAgentId + " not found");
+            }
+            List<Order> deliverables = orderService.getReadyForDeliveryOrders(deliveryAgentId, deliveryAgent.getRestaurant().getId());
+
+            List<ReadyToDeliverOrder> readyToDeliverOrders = deliverables.stream()
+                    .map(order -> new ReadyToDeliverOrder(
+                            order.getId(),
+                            order.getCustomerAddress(),
+                            order.getCustomer().getName(),
+                            order.getCustomer().getMobileNumber(),
+                            commonOperations.getOrderMenuDetails(order.getOrderDetails()),
+                            order.getTotalAmount()
+                    ))
+                    .collect(Collectors.toList());
+            return readyToDeliverOrders;
+        } catch (ServiceException e) {
+            log.error("Error while fetching ready for delivery orders: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while fetching ready for delivery orders: {}", e.getMessage());
             throw e;
         }
     }
