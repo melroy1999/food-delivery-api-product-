@@ -259,10 +259,26 @@ public class RestaurantService {
 				throw new ServiceException(HttpStatus.BAD_REQUEST, "Order with id " + orderId + " is " + order.getOrderStatus());
 			}
 			OrderEvents orderEvent = OrderEvents.valueOf(requestPayload.getOrderStatus().getOrderEvent());
-			OrderStates orderStates = processOrderEvent.process(order.getId(), orderEvent, requestPayload.getOrderStatus().getComment(), UserTypes.RESTAURANT_OWNER, restaurantOwner.getId());
+			OrderStates orderStates = processOrderEvent.process(order.getId(), orderEvent);
 			if(order.getOrderStatus().ordinal() >= orderStates.ordinal()) {
 				log.error("Order state transition failed for order with id: {}", orderId);
 				throw new ServiceException(HttpStatus.BAD_REQUEST, "Order state transition failed for order with id: " + orderId);
+			}
+			else{
+				order.setOrderStatus(orderStates);
+				order.setUpdatedAt(LocalDateTime.now());
+				orderRepository.save(order);
+				OrderLog orderLog = OrderLog.builder()
+						.order(order)
+						.orderSubStatus(orderStates.name())
+						.remarks(requestPayload.getOrderStatus().getComment())
+						.enteredBy(UserTypes.RESTAURANT_OWNER.name())
+						.enteredById(restaurantOwner.getId())
+						.isDeleted(false)
+						.isArchived(false)
+						.createdAt(LocalDateTime.now())
+						.build();
+				orderLogRepository.save(orderLog);
 			}
 			order = orderService.getOrderByOrderId(orderId);
 			log.info("Order states changed successfully by owner: {}", restaurantOwner.getId());

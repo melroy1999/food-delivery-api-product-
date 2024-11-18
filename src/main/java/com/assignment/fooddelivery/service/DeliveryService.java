@@ -8,7 +8,10 @@ import com.assignment.fooddelivery.enums.UserTypes;
 import com.assignment.fooddelivery.exception.ServiceException;
 import com.assignment.fooddelivery.model.DeliveryAgent;
 import com.assignment.fooddelivery.model.Order;
+import com.assignment.fooddelivery.model.OrderLog;
 import com.assignment.fooddelivery.repository.DeliveryAgentRepository;
+import com.assignment.fooddelivery.repository.OrderLogRepository;
+import com.assignment.fooddelivery.repository.OrderRepository;
 import com.assignment.fooddelivery.statemachine.OrderEvents;
 import com.assignment.fooddelivery.statemachine.OrderStates;
 import com.assignment.fooddelivery.statemachine.ProcessOrderEvent;
@@ -18,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,6 +37,10 @@ public class DeliveryService {
     private OrderService orderService;
     @Autowired
     private CommonOperations commonOperations;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private OrderLogRepository orderLogRepository;
 
     public ProcessDeliveryResponse processOrderDelivery(ProcessDeliveryRequest processDeliveryRequest, Long orderId) {
         try {
@@ -55,10 +63,26 @@ public class DeliveryService {
                 throw new ServiceException(HttpStatus.BAD_REQUEST, "Order with id " + orderId + " is already delivered");
             }
             OrderEvents orderEvent = OrderEvents.valueOf(processDeliveryRequest.getOrderStatus().getOrderEvent());
-            OrderStates orderStates = processOrderEvent.process(order.getId(), orderEvent, processDeliveryRequest.getOrderStatus().getComment(), UserTypes.DELIVERY_AGENT, deliveryAgent.getId());
+            OrderStates orderStates = processOrderEvent.process(order.getId(), orderEvent);
             if(order.getOrderStatus().ordinal() >= orderStates.ordinal()) {
                 log.error("Order state transition failed for order with id: {}", orderId);
                 throw new ServiceException(HttpStatus.BAD_REQUEST, "Order state transition failed for order with id: " + orderId);
+            }
+            else{
+                order.setOrderStatus(orderStates);
+                order.setUpdatedAt(LocalDateTime.now());
+                orderRepository.save(order);
+                OrderLog orderLog = OrderLog.builder()
+                        .order(order)
+                        .orderSubStatus(orderStates.name())
+                        .remarks(processDeliveryRequest.getOrderStatus().getComment())
+                        .enteredBy(UserTypes.DELIVERY_AGENT.name())
+                        .enteredById(deliveryAgent.getId())
+                        .isDeleted(false)
+                        .isArchived(false)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+                orderLogRepository.save(orderLog);
             }
             // Process the delivery
             if (processDeliveryRequest.getOrderStatus().getOrderEvent().equals(OrderEvents.ACCEPT_DELIVERY.name())) {

@@ -52,7 +52,7 @@ public class LoginService {
     public LoginResponse login(String username, String password) {
         try {
             // Get login details from database
-            LoginDetails loginDetails = loginDetailsRepository.findByUsername(username);
+            LoginDetails loginDetails = loginDetailsRepository.findByUsernameAndIsDeletedFalse(username);
             if (loginDetails == null) {
                 log.error("User not found with username: {}", username);
                 throw new ServiceException(HttpStatus.NOT_FOUND, "User not found with username: " + username);
@@ -78,6 +78,54 @@ public class LoginService {
         }
         catch (Exception e) {
             log.error("Error while logging in user: {}", username);
+            throw e;
+        }
+    }
+
+    public void deactivateUser(String username, UserTypes userRole) {
+        try {
+            // Get login details from database
+            LoginDetails loginDetails = loginDetailsRepository.findByUsernameAndUserRoleAndIsDeletedFalse(username, userRole);
+            if (loginDetails == null) {
+                log.error("User not found with username: {}", username);
+                throw new ServiceException(HttpStatus.NOT_FOUND, "User not found with username: " + username);
+            }
+            // Deactivate user
+            loginDetails.setDeleted(true);
+            loginDetails.setUpdatedAt(LocalDateTime.now());
+            loginDetailsRepository.save(loginDetails);
+            log.info("User deactivated successfully: {}", username);
+        }
+        catch (ServiceException e) {
+            log.error("Error while deactivating user: {}", username);
+            throw e;
+        }
+        catch (Exception e) {
+            log.error("Error while deactivating user: {}", username);
+            throw e;
+        }
+    }
+
+    public void activateUser(String username, UserTypes userRole) {
+        try {
+            // Get login details from database
+            LoginDetails loginDetails = loginDetailsRepository.findByUsernameAndUserRoleAndIsDeletedTrue(username, userRole);
+            if (loginDetails == null) {
+                log.error("User not found with username: {}", username);
+                throw new ServiceException(HttpStatus.NOT_FOUND, "User not found with username: " + username);
+            }
+            // Activate user
+            loginDetails.setDeleted(false);
+            loginDetails.setUpdatedAt(LocalDateTime.now());
+            loginDetailsRepository.save(loginDetails);
+            log.info("User activated successfully: {}", username);
+        }
+        catch (ServiceException e) {
+            log.error("Error while activating user: {}", username);
+            throw e;
+        }
+        catch (Exception e) {
+            log.error("Error while activating user: {}", username);
             throw e;
         }
     }
